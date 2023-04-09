@@ -1,6 +1,6 @@
 source("functions.R")
 
-
+#hellow world
 # read data ------------------------
 math = read.csv("student-mat.csv", sep = ';', stringsAsFactors = T)
 str(math)
