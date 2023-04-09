@@ -52,6 +52,9 @@ math.svm.fit = svm(classification.formula, data = math.trian)
 math.svm.predict = predict(math.svm.fit, math.test)
 
 # ---------------------------- Regression -------------------------------------
+regression.formula = as.formula(paste("grade.con~", paste(predictors, collapse = "+"), sep = ''))
+math.svm.fit.con = svm(regression.formula, data = math.trian)
+math.svm.predict.con = predict(math.svm.fit.con, math.test)
 ## --------------------------- OLS -------------------------------------------
 ## --------------------------- Ridge -----------------------------------------
 ## --------------------------- LASSO -----------------------------------------
