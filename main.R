@@ -45,11 +45,16 @@ chart.Correlation(por.grade.train, histogram = TRUE, method = "pearson")
 
 
 # ---------------------------- classification ---------------------------------
+### --------------------------- svm -----------------------------
 library(e1071)
 classification.formula = as.formula(paste("grade.cat~", paste(predictors, collapse = "+"), sep = ''))
 
 math.svm.fit = svm(classification.formula, data = math.trian)
 math.svm.predict = predict(math.svm.fit, math.test)
+
+### -------------------------- svm cv ----------------------
+set.seed(114514)
+svm.cv.mine(q3.train = math.trian, form = classification.formula, k = 10, response_variable = "grade.cat")
 
 # ---------------------------- Regression -------------------------------------
 ## --------------------------- OLS -------------------------------------------
