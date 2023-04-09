@@ -7,6 +7,8 @@ str(math)
 por = read.csv("student-por.csv", sep = ";", stringsAsFactors = T)
 str(por)
 
+math = fastDummies::dummy_columns(math, remove_first_dummy = T, remove_selected_columns = T)
+por = fastDummies::dummy_columns(por, remove_first_dummy = T, remove_selected_columns = T)
 
 predictors = setdiff(colnames(math), c("G1", "G2", "G3"))
 
