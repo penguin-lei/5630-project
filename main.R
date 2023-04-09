@@ -1,4 +1,6 @@
 source("functions.R")
+library(ggplot2)
+library(fastDummies)
 
 #hellow world
 # read data ------------------------
@@ -7,7 +9,8 @@ str(math)
 por = read.csv("student-por.csv", sep = ";", stringsAsFactors = T)
 str(por)
 
-
+math = fastDummies::dummy_columns(math, remove_first_dummy = T, remove_selected_columns = T)
+por = fastDummies::dummy_columns(por, remove_first_dummy = T, remove_selected_columns = T)
 predictors = setdiff(colnames(math), c("G1", "G2", "G3"))
 
 math$grade.cat = cut(math$G1, breaks=c(0, 9, 11, 13, 15, 20),
@@ -58,9 +61,16 @@ set.seed(114514)
 
 
 set.seed(114514)
-svm.cv.val.error = svm.cv.cost(q3.train = math.trian, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = exp(seq(from = -5, to = 2, length.out = 100)))
+cost.list = exp(seq(from = -6, to = 2, length.out = 100))
+svm.cv.val.error = svm.cv.cost(q3.train = math.trian, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = cost.list)
 
+ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error))
 
+## logistic regression
+glm(classification.formula, data = math.trian, family = binomial)
+
+## logistic regression lasso 
+math.logistic.lasso = cv.glmnet(x = math.trian[,predictors], y = math.trian$grade.cat, family = "multinomial", alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)))
 
 # Regression -------------------------------------
 ## OLS -------------------------------------------
