@@ -1,6 +1,9 @@
 source("functions.R")
 library(ggplot2)
 library(fastDummies)
+library(tidyverse)
+library(caret)
+library(MASS)
 
 # read data ------------------------
 math = read.csv("student-mat.csv", sep = ';', stringsAsFactors = T)
@@ -8,8 +11,11 @@ str(math)
 por = read.csv("student-por.csv", sep = ";", stringsAsFactors = T)
 str(por)
 
+#set dummies
 math = fastDummies::dummy_columns(math, remove_first_dummy = T, remove_selected_columns = T)
 por = fastDummies::dummy_columns(por, remove_first_dummy = T, remove_selected_columns = T)
+
+
 
 predictors = setdiff(colnames(math), c("G1", "G2", "G3"))
 
@@ -19,8 +25,6 @@ por$grade.cat = cut(por$G1, breaks=c(0, 9, 11, 13, 15, 20),
                     labels=c('F', 'D', 'C', 'B', 'A'))
 por$grade.con = por$G1
 math$grade.con = math$G1
-
-
 
 
 # split data -------------------------
@@ -71,11 +75,30 @@ ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error))
 glm(classification.formula, data = math.trian, family = "binomial")
 
 ## logistic regression lasso
-math.logistic.lasso = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)))
+math.logistic.lasso.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
+math.logistic.lasso.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", alpha = 1, lambda = math.logistic.lasso.cv$lambda.min, standardize = TRUE)
+
+## logistic regression ridge
+math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", alpha = 0, lambda = exp(seq(from = -5, to = 2, length.out = 100)), standardize = TRUE)
+math.logistic.ridge.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", alpha = 0, lambda = math.logistic.ridge.cv$lambda.min, standardize = TRUE)
 
 ## LDA -----------------------------------------
+math.lda<-lda(classification.formula,data=math.trian)
+math.coord.1<-as.matrix(math.trian[,predictors]) %*% math.lda$scaling[,1]
+math.coord.2<-as.matrix(math.trian[,predictors]) %*% math.lda$scaling[,2]
+ggplot(data.frame(coord.1,coord.2,math.trian$grade.cat))+geom_point(aes(math.coord.1, math.coord.2, color = math.trian$grade.cat))
 
 # Regression -------------------------------------
+
 ## OLS -------------------------------------------
+math.ols<-lm(classification.formula,data=math.trian)
+
 ## Ridge -----------------------------------------
+math.ridge.cv<-cv.glmnet(as.matrix(math.trian[,predictors]),math.trian$grade.con,alpha=0,lambda = exp(seq(-10, 5, by=0.1)),standardize=TRUE)
+plot(math.ridge.cv)
+math.ridge.best<-glmnet(math.trian[,predictors],math.trian$grade.con,alpha=0,lambda = math.ridge.cv$lambda.min,standardize=TRUE)
+                  
 ## LASSO -----------------------------------------
+math.lasso.cv<-cv.glmnet(as.matrix(math.trian[,predictors]),math.trian$grade.con,alpha=1,lambda = exp(seq(-10, 5, by=0.1)),standardize=TRUE)
+plot(math.lasso.cv)
+math.lasso.best<-glmnet(math.trian[,predictors],math.trian$grade.con,alpha=1,lambda = math.lasso.cv$lambda.min,standardize=TRUE)
