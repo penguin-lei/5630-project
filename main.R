@@ -66,7 +66,6 @@ set.seed(114514)
 
 
 set.seed(114514)
-svm.cv.val.error = svm.cv.cost(q3.train = math.trian, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = exp(seq(from = -5, to = 2, length.out = 100)))
 cost.list = exp(seq(from = -6, to = 2, length.out = 100))
 svm.cv.val.error = svm.cv.cost(q3.train = math.trian, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = cost.list)
 ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error))
