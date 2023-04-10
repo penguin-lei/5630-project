@@ -90,12 +90,15 @@ math.logistic.lasso.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = m
                                    alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
 math.logistic.lasso.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                   alpha = 1, lambda = math.logistic.lasso.cv$lambda.min, standardize = TRUE)
+mean(math.test$grade.cat==predict(math.logistic.lasso.best,as.matrix(math.test[,predictors]),type="class"))
+
 ## logistic regression ridge
 set.seed(114514)
 math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                    alpha = 0, lambda = exp(seq(from = -5, to = 2, length.out = 100)), standardize = TRUE)
 math.logistic.ridge.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                   alpha = 0, lambda = math.logistic.ridge.cv$lambda.min, standardize = TRUE)
+mean(math.test$grade.cat==predict(math.logistic.ridge.best,as.matrix(math.test[,predictors]),type="class"))
 
 ## LDA -----------------------------------------
 math.lda<-lda(classification.formula,data=math.trian)
