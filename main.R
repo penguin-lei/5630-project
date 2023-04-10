@@ -89,7 +89,6 @@ math.logistic.lasso.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = m
                                    alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
 math.logistic.lasso.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                   alpha = 1, lambda = math.logistic.lasso.cv$lambda.min, standardize = TRUE)
-mean(math.test$grade.cat==predict(math.glm,data=math.test[,predictors],type="response"))
 ## logistic regression ridge
 set.seed(114514)
 math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
