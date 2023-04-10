@@ -84,21 +84,38 @@ math.svm.fit = svm(classification.formula, data = math.trian, cost = cost.list[w
 math.glm<-glm(classification.formula, data = math.trian, family = "binomial")
 
 
+
 ## logistic regression lasso
+#math
 set.seed(114514)
 math.logistic.lasso.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                    alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
 math.logistic.lasso.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                   alpha = 1, lambda = math.logistic.lasso.cv$lambda.min, standardize = TRUE)
 mean(math.test$grade.cat==predict(math.logistic.lasso.best,as.matrix(math.test[,predictors]),type="class"))
+#por
+set.seed(114514)
+por.logistic.lasso.cv = cv.glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
+                                  alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
+por.logistic.lasso.best = glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
+                                 alpha = 1, lambda = por.logistic.lasso.cv$lambda.min, standardize = TRUE)
+mean(por.test$grade.cat==predict(por.logistic.lasso.best,as.matrix(por.test[,predictors]),type="class"))
 
 ## logistic regression ridge
+#math
 set.seed(114514)
 math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                    alpha = 0, lambda = exp(seq(from = -5, to = 2, length.out = 100)), standardize = TRUE)
 math.logistic.ridge.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
                                   alpha = 0, lambda = math.logistic.ridge.cv$lambda.min, standardize = TRUE)
 mean(math.test$grade.cat==predict(math.logistic.ridge.best,as.matrix(math.test[,predictors]),type="class"))
+#por
+set.seed(114514)
+por.logistic.ridge.cv = cv.glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
+                                  alpha = 0, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
+por.logistic.ridge.best = glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
+                                 alpha = 0, lambda = por.logistic.ridge.cv$lambda.min, standardize = TRUE)
+mean(por.test$grade.cat==predict(por.logistic.ridge.best,as.matrix(por.test[,predictors]),type="class"))
 
 ## LDA -----------------------------------------
 math.lda<-lda(classification.formula,data=math.trian)
@@ -106,6 +123,7 @@ math.coord.1<-as.matrix(math.trian[,predictors]) %*% math.lda$scaling[,1]
 math.coord.2<-as.matrix(math.trian[,predictors]) %*% math.lda$scaling[,2]
 ggplot(data.frame(coord.1,coord.2,math.trian$grade.cat))+
   geom_point(aes(math.coord.1, math.coord.2, color = math.trian$grade.cat))
+mean(math.test$grade.cat==predict(math.lda,newdata=math.test)$class)
 
 # Regression -------------------------------------
 
@@ -134,6 +152,7 @@ plot(por.ridge.cv)
 por.ridge.best<-glmnet(por.train[,predictors],por.train$grade.con,
                         alpha=0,lambda = por.ridge.cv$lambda.min,standardize=TRUE)
 mean((por.test$grade.con-predict(por.ridge.best,as.matrix(por.test[,predictors])))^2)
+
 ## LASSO -----------------------------------------
 #math
 set.seed(114514)
