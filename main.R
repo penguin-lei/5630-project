@@ -19,9 +19,9 @@ por = fastDummies::dummy_columns(por, remove_first_dummy = T, remove_selected_co
 
 predictors = setdiff(colnames(math), c("G1", "G2", "G3"))
 
-math$grade.cat = cut(math$G1, breaks=c(0, 9, 11, 13, 15, 20),
+math$grade.cat = cut(math$G1, breaks=c(-1, 9, 11, 13, 15, 20),
                      labels=c('F', 'D', 'C', 'B', 'A'))
-por$grade.cat = cut(por$G1, breaks=c(0, 9, 11, 13, 15, 20),
+por$grade.cat = cut(por$G1, breaks=c(-1, 9, 11, 13, 15, 20),
                     labels=c('F', 'D', 'C', 'B', 'A'))
 por$grade.con = por$G1
 math$grade.con = math$G1
