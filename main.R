@@ -175,7 +175,7 @@ math.coord.2<-as.matrix(math.train[,predictors]) %*% math.lda$scaling[,2]
 ggplot(data.frame(math.coord.1,math.coord.2,math.train$grade.cat))+
   geom_point(aes(math.coord.1, math.coord.2, color = math.train$grade.cat))
 
-#### LDA math train error
+#### LDA math train error---------
 1-mean(math.train$grade.cat==predict(math.lda,newdata=math.train)$class)
 
 #### LDA math classification-------
@@ -193,7 +193,7 @@ por.coord.2<-as.matrix(por.train[,predictors]) %*% por.lda$scaling[,2]
 ggplot(data.frame(por.coord.1,por.coord.2,por.train$grade.cat))+
   geom_point(aes(por.coord.1, por.coord.2, color = por.train$grade.cat))
 
-#### LDA Portuguese train error
+#### LDA Portuguese train error------
 1-mean(por.train$grade.cat==predict(por.lda,newdata=por.train)$class)
 
 #### LDA Portuguese classification-------
@@ -265,7 +265,7 @@ plot(por.ridge.cv)
 por.ridge.best<-glmnet(por.train[,predictors],por.train$grade.con,
                         alpha=0,lambda = por.ridge.cv$lambda.min,standardize=TRUE)
 
-#### ridge Portuguese error rate---------
+#### ridge Portuguese train error---------
 mean((por.train$grade.con-predict(por.ridge.best,as.matrix(por.train[,predictors])))^2) 
 
 #### ridge Portuguese prediction------
