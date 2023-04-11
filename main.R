@@ -80,9 +80,9 @@ ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error))
 
 math.svm.fit = svm(classification.formula, data = math.train, cost = cost.list[which.min(svm.cv.val.error)], kernel = 'linear')
 
-## logistic regression
+## logistic regression-----------
 math.glm<-glm(classification.formula, data = math.train, family = "binomial")
-predict(math.glm,math.test,type="response")
+predict(math.glm,math.test,type="class")
 
 
 
@@ -96,12 +96,15 @@ plot(math.logistic.lasso.cv)
 math.logistic.lasso.best = glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                   alpha = 1, lambda = math.logistic.lasso.cv$lambda.min, standardize = TRUE)
 
+#### l-r LASSO math train error-------
+1-mean(math.train$grade.cat==predict(math.logistic.lasso.best,as.matrix(math.train[,predictors]),type="class"))
+
 #### l-r LASSO math classification-------
 math.logistic.lasso<-cbind(math.test$grade.cat,predict(math.logistic.lasso.best,as.matrix(math.test[,predictors]),type="class"))
 colnames(math.logistic.lasso)<-c("true","predicted")
 View(math.logistic.lasso)
 
-#### l-r LASSO math Misclassification rate
+#### l-r LASSO math Misclassification rate---------
 1-mean(math.test$grade.cat==predict(math.logistic.lasso.best,as.matrix(math.test[,predictors]),type="class"))
 
 ### l-r LASSO Portuguese-------
@@ -112,12 +115,15 @@ plot(por.logistic.lasso.cv)
 por.logistic.lasso.best = glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
                                  alpha = 1, lambda = por.logistic.lasso.cv$lambda.min, standardize = TRUE)
 
+#### l-r LASSO Portuguese train error---------
+1-mean(por.train$grade.cat==predict(por.logistic.lasso.best,as.matrix(por.train[,predictors]),type="class"))
+
 #### l-r LASSO Portuguese classification-------
 por.logistic.lasso<-cbind(por.test$grade.cat,predict(por.logistic.lasso.best,as.matrix(por.test[,predictors]),type="class"))
 colnames(por.logistic.lasso)<-c("true","predicted")
 View(por.logistic.lasso)
 
-#### l-r LASSO Portuguese Misclassification rate
+#### l-r LASSO Portuguese Misclassification rate---------
 1-mean(por.test$grade.cat==predict(por.logistic.lasso.best,as.matrix(por.test[,predictors]),type="class"))
 
 ## logistic regression ridge--------
@@ -129,6 +135,9 @@ math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.train[,predictors]), y = m
 plot(math.logistic.ridge.cv)
 math.logistic.ridge.best = glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                   alpha = 0, lambda = math.logistic.ridge.cv$lambda.min, standardize = TRUE)
+
+#### l-r ridge math train error-------
+1-mean(math.train$grade.cat==predict(math.logistic.ridge.best,as.matrix(math.train[,predictors]),type="class"))
 
 
 #### l-r ridge math classification-------
@@ -147,6 +156,9 @@ plot(por.logistic.ridge.cv)
 por.logistic.ridge.best = glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
                                  alpha = 0, lambda = por.logistic.ridge.cv$lambda.min, standardize = TRUE)
 
+#### l-r ridge por train error-------
+1-mean(por.train$grade.cat==predict(por.logistic.ridge.best,as.matrix(por.train[,predictors]),type="class"))
+
 #### l-r ridge Portuguese classification-------
 por.logistic.ridge<-cbind(por.test$grade.cat,predict(por.logistic.ridge.best,as.matrix(por.test[,predictors]),type="class"))
 colnames(por.logistic.ridge)<-c("true","predicted")
@@ -163,6 +175,9 @@ math.coord.2<-as.matrix(math.train[,predictors]) %*% math.lda$scaling[,2]
 ggplot(data.frame(math.coord.1,math.coord.2,math.train$grade.cat))+
   geom_point(aes(math.coord.1, math.coord.2, color = math.train$grade.cat))
 
+#### LDA math train error
+1-mean(math.train$grade.cat==predict(math.lda,newdata=math.train)$class)
+
 #### LDA math classification-------
 LDA.math.pred<-cbind(math.test$grade.cat,predict(math.lda,newdata=math.test)$class)
 colnames(LDA.math.pred)<-c("true","predicted")
@@ -178,6 +193,8 @@ por.coord.2<-as.matrix(por.train[,predictors]) %*% por.lda$scaling[,2]
 ggplot(data.frame(por.coord.1,por.coord.2,por.train$grade.cat))+
   geom_point(aes(por.coord.1, por.coord.2, color = por.train$grade.cat))
 
+#### LDA Portuguese train error
+1-mean(por.train$grade.cat==predict(por.lda,newdata=por.train)$class)
 
 #### LDA Portuguese classification-------
 LDA.por.pred<-cbind(por.test$grade.cat,predict(por.lda,newdata=por.test)$class)
@@ -194,6 +211,9 @@ View(LDA.por.pred)
 ###OLS math-------
 math.ols<-lm(regression.formula,data=por.train)
 
+### OLS math train error-------
+mean((math.train$grade.con-predict(math.ols,newdata=math.train[,predictors]))^2)
+
 #### OLS math prediction------
 math.ols.pred<-(cbind(math.test$grade.con,predict(math.ols,math.test)))
 colnames(math.ols.pred)<-c("true","predicted")
@@ -204,6 +224,9 @@ mean((math.test$grade.con-predict(math.ols,newdata=math.test[,predictors]))^2)
 
 ###OLS Portuguese--------
 por.ols<-lm(regression.formula,data=por.train)
+
+#### OLS Portuguese train error-------
+mean((por.train$grade.con-predict(por.ols,newdata=por.train[,predictors]))^2)
 
 #### OLS Portuguese prediction------
 por.ols.pred<-(cbind(por.test$grade.con,predict(por.ols,por.test)))
@@ -222,6 +245,9 @@ plot(math.ridge.cv)
 math.ridge.best<-glmnet(math.train[,predictors],math.train$grade.con,
                         alpha=0,lambda = math.ridge.cv$lambda.min,standardize=TRUE)
 
+#### ridge math error rate---------
+mean((math.train$grade.con-predict(math.ridge.best,as.matrix(math.train[,predictors])))^2) 
+
 #### ridge math prediction------
 math.ridge.pred<-(cbind(math.test$grade.con,predict(math.ridge.best,as.matrix(math.test[,predictors]))))
 colnames(math.lasso.pred)<-c("true","predicted")
@@ -239,6 +265,9 @@ plot(por.ridge.cv)
 por.ridge.best<-glmnet(por.train[,predictors],por.train$grade.con,
                         alpha=0,lambda = por.ridge.cv$lambda.min,standardize=TRUE)
 
+#### ridge Portuguese error rate---------
+mean((por.train$grade.con-predict(por.ridge.best,as.matrix(por.train[,predictors])))^2) 
+
 #### ridge Portuguese prediction------
 por.ridge.pred<-(cbind(por.test$grade.con,predict(por.ridge.best,as.matrix(por.test[,predictors]))))
 colnames(math.lasso.pred)<-c("true","predicted")
@@ -255,6 +284,9 @@ math.lasso.cv<-cv.glmnet(as.matrix(math.train[,predictors]),math.train$grade.con
 plot(math.lasso.cv)
 math.lasso.best<-glmnet(math.train[,predictors],math.train$grade.con,
                         alpha=1,lambda = math.lasso.cv$lambda.min,standardize=TRUE)
+
+#### LASSO math train error-------
+mean((math.train$grade.con-predict(math.lasso.best,as.matrix(math.train[,predictors])))^2)
 
 #### LASSO math prediction------
 math.lasso.pred<-(cbind(math.test$grade.con,predict(math.lasso.best,as.matrix(math.test[,predictors]))))
@@ -274,6 +306,9 @@ por.lasso.cv<-cv.glmnet(as.matrix(por.train[,predictors]),por.train$grade.con,
 plot(por.lasso.cv)
 por.lasso.best<-glmnet(por.train[,predictors],por.train$grade.con,
                        alpha=1,lambda = por.lasso.cv$lambda.min,standardize=TRUE)
+
+#### LASSO Portuguese train error-------
+mean((por.train$grade.con-predict(por.lasso.best,as.matrix(por.train[,predictors])))^2)
 
 #### LASSO por prediction------
 por.lasso.pred<-(cbind(por.test$grade.con,predict(por.lasso.best,as.matrix(por.test[,predictors]))))
