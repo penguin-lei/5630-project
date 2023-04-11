@@ -41,5 +41,13 @@ math.svm.test.error = mean(math.svm.predict != math.test$grade.cat)
 library(nnet)
 
 math.logistic.fit = multinom(formula = classification.formula, data = math.train, Hess = T)
+predict(math.logistic.fit)
 summary(math.logistic.fit)
+math.logistic.error.train = mean(math.train$grade.cat != predict(math.logistic.fit))
+math.logistic.error.test = mean(math.test$grade.cat != predict(math.logistic.fit, math.test))
 
+por.logistic.fit = multinom(formula = classification.formula, data = por.train, Hess = T)
+predict(por.logistic.fit)
+summary(por.logistic.fit)
+por.logistic.error.train = mean(por.train$grade.cat != predict(por.logistic.fit))
+por.logistic.error.test = mean(por.test$grade.cat != predict(por.logistic.fit, por.test))
