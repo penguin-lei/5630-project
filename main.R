@@ -31,15 +31,15 @@ set.seed(114514)
 train_idx.math = sample(1:nrow(math), floor(nrow(math))*0.8, replace = F)
 train_idx.por = sample(1:nrow(por), floor(nrow(por))*0.8, replace = F)
 
-math.trian = math[train_idx.math,]
+math.train = math[train_idx.math,]
 math.test = math[-train_idx.math,]
 
 por.train = por[train_idx.por,]
 por.test = por[-train_idx.por,]
 
-preproc.param <- math.trian %>%
+preproc.param <- math.train %>%
   preProcess(method = c("center", "scale"))
-math.trian <- preproc.param %>% predict(math.trian)
+math.train <- preproc.param %>% predict(math.train)
 math.test <- preproc.param %>% predict(math.test)
 preproc.param <- por.train %>%
   preProcess(method = c("center", "scale"))
@@ -47,10 +47,10 @@ por.train <- preproc.param %>% predict(por.train)
 por.test <- preproc.param %>% predict(por.test)
 # EDA --------------------------------
 response_variable = ''
-# descriptive(sheet_name = '', data = math.trian, descriptive_variables = colnames(math.trian))
+# descriptive(sheet_name = '', data = math.train, descriptive_variables = colnames(math.train))
 
-math.grade.train = math.trian[,c(31,32,33)]
-por.grade.train = por.train[,c(31, 32, 33)]
+math.grade.train = math.train[,c("G1","G2","G3")]
+por.grade.train = por.train[,c("G1", "G2", "G3")]
 
 library(PerformanceAnalytics)
 
@@ -65,23 +65,23 @@ library(e1071)
 classification.formula = as.formula(paste("grade.cat~", paste(predictors, collapse = "+"), sep = ''))
 regression.formula = as.formula(paste("grade.con~", paste(predictors, collapse = "+"), sep = ''))
 
-math.svm.fit = svm(classification.formula, data = math.trian)
+math.svm.fit = svm(classification.formula, data = math.train)
 math.svm.predict = predict(math.svm.fit, math.test)
 
 ### svm cv ----------------------
 set.seed(114514)
-# svm.cv.mine(q3.train = math.trian, form = classification.formula, k = 10, response_variable = "grade.cat")
+# svm.cv.mine(q3.train = math.train, form = classification.formula, k = 10, response_variable = "grade.cat")
 
 
 set.seed(114514)
 cost.list = exp(seq(from = -6, to = 2, length.out = 100))
-svm.cv.val.error = svm.cv.cost(q3.train = math.trian, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = cost.list)
+svm.cv.val.error = svm.cv.cost(q3.train = math.train, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = cost.list)
 ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error))
 
-math.svm.fit = svm(classification.formula, data = math.trian, cost = cost.list[which.min(svm.cv.val.error)], kernel = 'linear')
+math.svm.fit = svm(classification.formula, data = math.train, cost = cost.list[which.min(svm.cv.val.error)], kernel = 'linear')
 
 ## logistic regression
-math.glm<-glm(classification.formula, data = math.trian, family = "binomial")
+math.glm<-glm(classification.formula, data = math.train, family = "binomial")
 predict(math.glm,math.test,type="response")
 
 
@@ -90,10 +90,10 @@ predict(math.glm,math.test,type="response")
 
 ### l-r LASSO math--------
 set.seed(114514)
-math.logistic.lasso.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
+math.logistic.lasso.cv = cv.glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                    alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
 plot(math.logistic.lasso.cv)
-math.logistic.lasso.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
+math.logistic.lasso.best = glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                   alpha = 1, lambda = math.logistic.lasso.cv$lambda.min, standardize = TRUE)
 
 #### l-r LASSO math classification-------
@@ -124,10 +124,10 @@ View(por.logistic.lasso)
 
 ### l-r ridge math-------
 set.seed(114514)
-math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
+math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                    alpha = 0, lambda = exp(seq(from = -5, to = 2, length.out = 100)), standardize = TRUE)
 plot(math.logistic.ridge.cv)
-math.logistic.ridge.best = glmnet(x = as.matrix(math.trian[,predictors]), y = math.trian$grade.cat, family = "multinomial", 
+math.logistic.ridge.best = glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                   alpha = 0, lambda = math.logistic.ridge.cv$lambda.min, standardize = TRUE)
 
 
@@ -157,11 +157,11 @@ View(por.logistic.ridge)
 
 ## LDA -----------------------------------------
 ### LDA math------------
-math.lda<-lda(classification.formula,data=math.trian)
-math.coord.1<-as.matrix(math.trian[,predictors]) %*% math.lda$scaling[,1]
-math.coord.2<-as.matrix(math.trian[,predictors]) %*% math.lda$scaling[,2]
-ggplot(data.frame(math.coord.1,math.coord.2,math.trian$grade.cat))+
-  geom_point(aes(math.coord.1, math.coord.2, color = math.trian$grade.cat))
+math.lda<-lda(classification.formula,data=math.train)
+math.coord.1<-as.matrix(math.train[,predictors]) %*% math.lda$scaling[,1]
+math.coord.2<-as.matrix(math.train[,predictors]) %*% math.lda$scaling[,2]
+ggplot(data.frame(math.coord.1,math.coord.2,math.train$grade.cat))+
+  geom_point(aes(math.coord.1, math.coord.2, color = math.train$grade.cat))
 
 #### LDA math classification-------
 LDA.math.pred<-cbind(math.test$grade.cat,predict(math.lda,newdata=math.test)$class)
@@ -216,10 +216,10 @@ mean((por.test$grade.con-predict(por.ols,newdata=por.test[,predictors]))^2)
 ## Ridge -----------------------------------------
 ### ridge math------------
 set.seed(114514)
-math.ridge.cv<-cv.glmnet(as.matrix(math.trian[,predictors]),math.trian$grade.con,
+math.ridge.cv<-cv.glmnet(as.matrix(math.train[,predictors]),math.train$grade.con,
                          alpha=0,lambda = exp(seq(-10, 5, by=0.1)),standardize=TRUE)
 plot(math.ridge.cv)
-math.ridge.best<-glmnet(math.trian[,predictors],math.trian$grade.con,
+math.ridge.best<-glmnet(math.train[,predictors],math.train$grade.con,
                         alpha=0,lambda = math.ridge.cv$lambda.min,standardize=TRUE)
 
 #### ridge math prediction------
@@ -250,10 +250,10 @@ mean((por.test$grade.con-predict(por.ridge.best,as.matrix(por.test[,predictors])
 ## LASSO -----------------------------------------
 ### LASSO math----------
 set.seed(114514)
-math.lasso.cv<-cv.glmnet(as.matrix(math.trian[,predictors]),math.trian$grade.con,
+math.lasso.cv<-cv.glmnet(as.matrix(math.train[,predictors]),math.train$grade.con,
                          alpha=1,lambda = exp(seq(-10, 5, by=0.1)),standardize=TRUE)
 plot(math.lasso.cv)
-math.lasso.best<-glmnet(math.trian[,predictors],math.trian$grade.con,
+math.lasso.best<-glmnet(math.train[,predictors],math.train$grade.con,
                         alpha=1,lambda = math.lasso.cv$lambda.min,standardize=TRUE)
 
 #### LASSO math prediction------
