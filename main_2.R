@@ -36,3 +36,10 @@ math.svm.fit = svm(classification.formula, data = math.train, cost = cost.list[w
 math.svm.predict = predict(math.svm.fit, math.test, decision.values = F)
 math.svm.test.error = mean(math.svm.predict != math.test$grade.cat)
 
+
+## logistic regression ------------------
+library(nnet)
+
+math.logistic.fit = multinom(formula = classification.formula, data = math.train, Hess = T)
+summary(math.logistic.fit)
+
