@@ -102,7 +102,7 @@ correlation_test <- function(x1, x2, type = "chisq")
   type1 = ifelse(length(unique(x1)) == 2, "binary", "continuous")
   type2 = ifelse(length(unique(x2)) == 2, "binary", "continuous")
   
-  if(type1 == "binary" & type2 = "binary")
+  if(type1 == "binary" & type2 == "binary")
   {
     if(type == "chisq")
     {
@@ -113,11 +113,11 @@ correlation_test <- function(x1, x2, type = "chisq")
       return(fisher.test(x1, x2)$p.value)
     }
   }
-  if(type1 == "continuous" & type2 = "continuous")
+  if(type1 == "continuous" & type2 == "continuous")
   {
     return(summary(lm(x1~x2))$coefficients[2,4])
   }
-  if(type1 == "categorical" & type2 = "continuous")
+  if(type1 == "categorical" & type2 == "continuous")
   {
     x3 = x1
     x1 = x2

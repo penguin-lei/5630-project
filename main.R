@@ -5,6 +5,8 @@ library(tidyverse)
 library(caret)
 library(MASS)
 
+par(mar = c(6, 6, 4, 4))
+
 # read data ------------------------
 math = read.csv("student-mat.csv", sep = ';', stringsAsFactors = T)
 str(math)
@@ -57,6 +59,49 @@ library(PerformanceAnalytics)
 chart.Correlation(math.grade.train, histogram = TRUE, method = "pearson")
 chart.Correlation(por.grade.train, histogram = TRUE, method = "pearson")
 
+## ------------------- correlation matrix 
+p = length(predictors)
+math.cor.matrix = matrix(nrow = length(predictors), ncol = length(predictors))
+por.cor.matrix = matrix(nrow = p, ncol = p)
+for(i in 1:p)
+{
+  for(j in 1:p)
+  {
+    math.cor.matrix[i,j] = correlation_test(math.train[[predictors[i]]], math.train[[predictors[[j]]]])
+    por.cor.matrix[i,j] = correlation_test(por.train[[predictors[i]]], por.train[[predictors[j]]])
+    
+  }
+}
+
+library(reshape2)
+library(ggplot2)
+
+longData<-melt(math.cor.matrix)
+# longData<-longData[longData$value!=0,]
+longData<-melt(por.cor.matrix)
+
+ggplot(longData, aes(x = Var2, y = Var1)) + 
+  geom_raster(aes(fill=value)) + 
+  scale_fill_gradient(low="grey90", high="red") +
+  labs(x="predictors", y="predictors", title="Matrix") +
+  theme_bw() + theme(axis.text.x=element_text(size=20, angle=0, vjust=0.3),
+                     axis.text.y=element_text(size=20),
+                     plot.title=element_text(size=20))
+
+temp = longData$value
+longData$value[which(temp<0.05)] = 1
+longData$value[which(temp>=0.05)] = 0
+
+ggplot(longData, aes(x = Var2, y = Var1)) + 
+  geom_raster(aes(fill=value)) + 
+  scale_fill_gradient(low="grey90", high="red") +
+  labs(x="predictors", y="predictors", title="Hypothesis test for independence between predictors") +
+  theme_bw() + theme(axis.text.x=element_text(size=20, angle=0, vjust=0.3),
+                     axis.text.y=element_text(size=20),
+                     plot.title=element_text(size=20),
+                     axis.title.x = element_text(size = 20),
+                     axis.title.y = element_text(size = 20),
+                     legend.position = "none")
 
 
 # Classification ---------------------------------
@@ -74,9 +119,14 @@ set.seed(114514)
 
 
 set.seed(114514)
-cost.list = exp(seq(from = -6, to = 2, length.out = 100))
+cost.list = exp(seq(from = -6, to = 2, length.out = 200))
 svm.cv.val.error = svm.cv.cost(q3.train = math.train, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = cost.list)
-ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error))
+ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error), linewidth = 1.5)+ theme(axis.text.x=element_text(size=20, angle=0, vjust=0.3),
+                                                                           axis.text.y=element_text(size=20),
+                                                                           plot.title=element_text(size=20),
+                                                                           axis.title.x = element_text(size = 20),
+                                                                           axis.title.y = element_text(size = 20),
+                                                                           legend.position = "none")
 
 math.svm.fit = svm(classification.formula, data = math.train, cost = cost.list[which.min(svm.cv.val.error)], kernel = 'linear')
 
@@ -92,7 +142,7 @@ predict(math.glm,math.test,type="class")
 set.seed(114514)
 math.logistic.lasso.cv = cv.glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                    alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
-plot(math.logistic.lasso.cv)
+plot(math.logistic.lasso.cv, cex.lab = 2, cex.axis = 2)
 math.logistic.lasso.best = glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                   alpha = 1, lambda = math.logistic.lasso.cv$lambda.min, standardize = TRUE)
 
@@ -111,7 +161,7 @@ View(math.logistic.lasso)
 set.seed(114514)
 por.logistic.lasso.cv = cv.glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
                                   alpha = 1, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
-plot(por.logistic.lasso.cv)
+plot(por.logistic.lasso.cv, cex.lab = 2, cex.axis = 2)
 por.logistic.lasso.best = glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
                                  alpha = 1, lambda = por.logistic.lasso.cv$lambda.min, standardize = TRUE)
 
@@ -132,7 +182,7 @@ View(por.logistic.lasso)
 set.seed(114514)
 math.logistic.ridge.cv = cv.glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                    alpha = 0, lambda = exp(seq(from = -5, to = 2, length.out = 100)), standardize = TRUE)
-plot(math.logistic.ridge.cv)
+plot(math.logistic.ridge.cv, cex.lab = 2, cex.axis = 2)
 math.logistic.ridge.best = glmnet(x = as.matrix(math.train[,predictors]), y = math.train$grade.cat, family = "multinomial", 
                                   alpha = 0, lambda = math.logistic.ridge.cv$lambda.min, standardize = TRUE)
 
@@ -152,7 +202,7 @@ View(math.logistic.ridge)
 set.seed(114514)
 por.logistic.ridge.cv = cv.glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
                                   alpha = 0, lambda = exp(seq(from = -5, to = 2, length.out = 100)),standardize=TRUE)
-plot(por.logistic.ridge.cv)
+plot(por.logistic.ridge.cv, cex.lab = 2, cex.axis = 2)
 por.logistic.ridge.best = glmnet(x = as.matrix(por.train[,predictors]), y = por.train$grade.cat, family = "multinomial", 
                                  alpha = 0, lambda = por.logistic.ridge.cv$lambda.min, standardize = TRUE)
 

@@ -51,3 +51,4 @@ predict(por.logistic.fit)
 summary(por.logistic.fit)
 por.logistic.error.train = mean(por.train$grade.cat != predict(por.logistic.fit))
 por.logistic.error.test = mean(por.test$grade.cat != predict(por.logistic.fit, por.test))
+
