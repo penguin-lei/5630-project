@@ -115,11 +115,7 @@ math.svm.predict = predict(math.svm.fit, math.test)
 
 ### svm cv ----------------------
 set.seed(114514)
-# svm.cv.mine(q3.train = math.train, form = classification.formula, k = 10, response_variable = "grade.cat")
-
-
-set.seed(114514)
-cost.list = exp(seq(from = -6, to = 2, length.out = 200))
+cost.list = exp(seq(from = -8, to = 0, length.out = 100))
 svm.cv.val.error = svm.cv.cost(q3.train = math.train, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = cost.list)
 ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error), linewidth = 1.5)+ theme(axis.text.x=element_text(size=20, angle=0, vjust=0.3),
                                                                            axis.text.y=element_text(size=20),
@@ -129,6 +125,24 @@ ggplot() + geom_line(aes(x = log(cost.list), y = svm.cv.val.error), linewidth = 
                                                                            legend.position = "none")
 
 math.svm.fit = svm(classification.formula, data = math.train, cost = cost.list[which.min(svm.cv.val.error)], kernel = 'linear')
+math.svm.error.train = mean(predict(math.svm.fit) != math.train$grade.cat)
+math.svm.error.test = mean(predict(math.svm.fit, math.test) != math.test$grade.cat)
+
+set.seed(114514)
+cost.list = exp(seq(from = -8, to = 0, length.out = 100))
+por.svm.cv.val.error = svm.cv.cost(q3.train = por.train, form = classification.formula, k = 10, response_variable = "grade.cat", cost.list = cost.list)
+ggplot() + geom_line(aes(x = log(cost.list), y = por.svm.cv.val.error), linewidth = 1.5)+ theme(axis.text.x=element_text(size=20, angle=0, vjust=0.3),
+                                                                                                axis.text.y=element_text(size=20),
+                                                                                                plot.title=element_text(size=20),
+                                                                                                axis.title.x = element_text(size = 20),
+                                                                                                axis.title.y = element_text(size = 20),
+                                                                                                legend.position = "none")
+
+por.svm.fit = svm(classification.formula, data = por.train, cost = cost.list[which.min(por.svm.cv.val.error)], kernel = 'linear')
+por.svm.error.train = mean(predict(por.svm.fit) != por.train$grade.cat)
+por.svm.error.test = mean(predict(por.svm.fit, por.test) != por.test$grade.cat)
+
+
 
 ## logistic regression-----------
 math.glm<-glm(classification.formula, data = math.train, family = "binomial")
@@ -371,3 +385,33 @@ mean((por.test$grade.con-predict(por.lasso.best,as.matrix(por.test[,predictors])
 #### Portuguese important variable------
 coef(por.lasso.best)
 
+## SVM regression --------------------
+
+set.seed(114514)
+cost.list = exp(seq(from = -8, to = 0, length.out = 100))
+math.svm.cv.val.error.reg = svm.cv.cost.reg(q3.train = math.train, form = regression.formula, k = 10, response_variable = "grade.con", cost.list = cost.list)
+ggplot() + geom_line(aes(x = log(cost.list), y = math.svm.cv.val.error.reg), linewidth = 1.5)+ theme(axis.text.x=element_text(size=20, angle=0, vjust=0.3),
+                                                                                            axis.text.y=element_text(size=20),
+                                                                                            plot.title=element_text(size=20),
+                                                                                            axis.title.x = element_text(size = 20),
+                                                                                            axis.title.y = element_text(size = 20),
+                                                                                            legend.position = "none")
+
+math.svm.fit.reg = svm(regression.formula, data = math.train, cost = cost.list[which.min(math.svm.cv.val.error.reg)], kernel = 'linear')
+math.svm.error.train.reg = mean((predict(math.svm.fit.reg) - math.train$grade.con)^2)
+math.svm.error.test.reg = mean((predict(math.svm.fit.reg, math.test) - math.test$grade.con)^2)
+
+
+set.seed(114514)
+cost.list = exp(seq(from = -8, to = 0, length.out = 100))
+por.svm.cv.val.error.reg = svm.cv.cost.reg(q3.train = por.train, form = regression.formula, k = 10, response_variable = "grade.con", cost.list = cost.list)
+ggplot() + geom_line(aes(x = log(cost.list), y = por.svm.cv.val.error.reg), linewidth = 1.5)+ theme(axis.text.x=element_text(size=20, angle=0, vjust=0.3),
+                                                                                                    axis.text.y=element_text(size=20),
+                                                                                                    plot.title=element_text(size=20),
+                                                                                                    axis.title.x = element_text(size = 20),
+                                                                                                    axis.title.y = element_text(size = 20),
+                                                                                                    legend.position = "none")
+
+por.svm.fit.reg = svm(regression.formula, data = por.train, cost = cost.list[which.min(por.svm.cv.val.error.reg)], kernel = 'linear')
+por.svm.error.train.reg = mean((predict(por.svm.fit.reg) - por.train$grade.con)^2)
+por.svm.error.test.reg = mean((predict(por.svm.fit.reg, por.test) - por.test$grade.con)^2)

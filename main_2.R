@@ -1,17 +1,14 @@
 # baseline --------------------
 math.con.base = mean(math.train$grade.con)
 math.base.con.error = mean((math.test$grade.con - math.con.base)^2)
+math.base.con.error.train = mean((math.train$grade.con - math.con.base)^2)
 
 set.seed(114514)
 math.cat.base = sample(names(table(math.train$grade.cat)/nrow(math.train)), nrow(math.test), table(math.train$grade.cat)/nrow(math.train), replace = T)
 math.base.cat.error = mean(math.test$grade.cat != math.cat.base)
+math.base.cat.error.train = mean(math.train$grade.cat != sample(names(table(math.train$grade.cat)/nrow(math.train)), nrow(math.train), table(math.train$grade.cat)/nrow(math.train), replace = T))
 
-por.con.base = mean(por.train$grade.con)
-por.base.con.error = mean((por.test$grade.con - por.con.base)^2)
 
-set.seed(114514)
-por.cat.base = sample(names(table(por.train$grade.cat)/nrow(por.train)), nrow(por.test), table(por.train$grade.cat)/nrow(por.train), replace = T)
-por.base.cat.error = mean(por.test$grade.cat != por.cat.base)
 
 
 ### svm cv ----------------------

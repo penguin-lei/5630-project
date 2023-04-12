@@ -97,6 +97,31 @@ svm.cv.cost <- function(q3.train, form, k, response_variable, cost.list)
   return(val.err.cost)
 }
 
+svm.cv.cost.reg <- function(q3.train, form, k, response_variable, cost.list)
+{
+  
+  n = length(cost.list)
+  folds = caret::createFolds(1:nrow(q3.train),k = k)
+  
+  
+  val.err.cost = numeric(n)
+  for(j in 1:n)
+  {
+    validation_error = numeric(k)
+    for(i in 1:k){
+      val.train = q3.train[-folds[[i]],]
+      val.test = q3.train[folds[[i]],]
+      
+      fit = svm(form, data = val.train, cost = cost.list[j], kernel = 'linear')
+      predict.test = predict(fit, val.test, decision.values = F)
+      
+      validation_error[i] = mean((predict.test - val.test[[response_variable]])^2)
+    }
+    val.err.cost[j] = mean(validation_error)
+  }
+  return(val.err.cost)
+}
+
 correlation_test <- function(x1, x2, type = "chisq")
 {
   type1 = ifelse(length(unique(x1)) == 2, "binary", "continuous")
