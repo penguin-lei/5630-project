@@ -59,7 +59,7 @@ library(PerformanceAnalytics)
 chart.Correlation(math.grade.train, histogram = TRUE, method = "pearson")
 chart.Correlation(por.grade.train, histogram = TRUE, method = "pearson")
 
-## ------------------- correlation matrix 
+## correlation matrix -------------
 p = length(predictors)
 math.cor.matrix = matrix(nrow = length(predictors), ncol = length(predictors))
 por.cor.matrix = matrix(nrow = p, ncol = p)
@@ -73,11 +73,11 @@ for(i in 1:p)
   }
 }
 
+
 library(reshape2)
 library(ggplot2)
 
 longData<-melt(math.cor.matrix)
-# longData<-longData[longData$value!=0,]
 longData<-melt(por.cor.matrix)
 
 ggplot(longData, aes(x = Var2, y = Var1)) + 
@@ -102,6 +102,9 @@ ggplot(longData, aes(x = Var2, y = Var1)) +
                      axis.title.x = element_text(size = 20),
                      axis.title.y = element_text(size = 20),
                      legend.position = "none")
+
+
+
 
 
 # Classification ---------------------------------
@@ -145,8 +148,21 @@ por.svm.error.test = mean(predict(por.svm.fit, por.test) != por.test$grade.cat)
 
 
 ## logistic regression-----------
-math.glm<-glm(classification.formula, data = math.train, family = "binomial")
-predict(math.glm,math.test,type="class")
+## logistic regression ------------------
+library(nnet)
+
+math.logistic.fit = multinom(formula = classification.formula, data = math.train, Hess = T)
+predict(math.logistic.fit)
+summary(math.logistic.fit)
+math.logistic.error.train = mean(math.train$grade.cat != predict(math.logistic.fit))
+math.logistic.error.test = mean(math.test$grade.cat != predict(math.logistic.fit, math.test))
+
+por.logistic.fit = multinom(formula = classification.formula, data = por.train, Hess = T)
+predict(por.logistic.fit)
+summary(por.logistic.fit)
+por.logistic.error.train = mean(por.train$grade.cat != predict(por.logistic.fit))
+por.logistic.error.test = mean(por.test$grade.cat != predict(por.logistic.fit, por.test))
+
 
 
 
