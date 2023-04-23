@@ -28,8 +28,8 @@ nn.model.math.reg %>% evaluate(as.matrix(math.test[,predictors]), math.test$grad
 
 
 paras_list = expand.grid(c(5, 10, 20), c(2, 4, 5, 10), 
-                         c("relu", "elu", "selu"),
-                         c("relu", "elu", "selu"),
+                         c("relu", "elu", "selu", "sigmoid"),
+                         c("relu", "elu", "selu", "sigmoid"),
                          c(4, 8, 16, 32),
                          c(10, 20, 40, 60, 80))
 # set up a validation set to select parameters
@@ -56,3 +56,27 @@ for(i in 1:nrow(paras_list)){
   
   val_error[i] = mean((nn.model.math.reg %>% predict(as.matrix(val_d[,predictors])) - val_d$grade.con)^2)
 }
+
+
+paras_list[which.min(val_error),]
+# Var1 Var2 Var3 Var4 Var5 Var6
+# 179   10   10 selu  elu    8   10
+
+idx = 179
+nn.model.math.reg = keras_model_sequential()
+nn.model.math.reg %>% layer_dense(units = paras_list[idx,1], activation = paras_list[idx,3], input_shape = c(39)) %>%
+  layer_dense(units = paras_list[idx,2], activation = paras_list[idx,4]) %>% 
+  layer_dense(units = 1)
+
+nn.model.math.reg %>% compile(loss = "mse",
+                              optimizer = 'rmsprop',
+                              metrics = 'mse')
+
+nn.model.math.reg.fit <- nn.model.math.reg %>% fit(as.matrix(math.train[,predictors]), 
+                                                   math.train$grade.con, 
+                                                   epochs = paras_list[idx,6], 
+                                                   batch_size = paras_list[idx,5],
+                                                   validation_split = 0.2)
+
+mean((nn.model.math.reg %>% predict(as.matrix(math.test[,predictors])) - math.test$grade.con)^2)
+
