@@ -80,8 +80,8 @@ summary(math.ols.mult)
 por.ols<-lm(regression.formula,data=por)
 #conduct multicollinearity detection
 vif(por.ols)
-por.mult<-por[,-c(27,28)]
-por.ols.mult<-lm(grade.con~.-G1-G2-G3-grade.cat,data=por.mult)
+#por.mult<-por[,-c(27,28)]
+por.ols.mult<-lm(grade.con~.-G1-G2-G3-grade.cat,data=por)
 summary(por.ols.mult)
 #R^2=0.3247 
 ```
@@ -120,7 +120,7 @@ bc<-boxcox(math.ols.mult.out.error,plotit=T)
 lambda <- bc$x[which.max(bc$y)]
 lambda
 math.mult.out.error.sq<-math.mult.out.error
-math.mult.out.error.sq$grade.con<-((math.mult.out.error.sq$grade.con)^0.30303-1)/0.30303
+math.mult.ouqt.error.sq$grade.con<-((math.mult.out.error.sq$grade.con)^0.30303-1)/0.30303
 math.ols.trans<-lm(grade.con~.-grade.cat-G1-G2-G3,data=math.mult.out.error.sq)
 summary(math.ols.trans)
 #R^2=0.2987
