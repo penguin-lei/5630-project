@@ -1,0 +1,156 @@
+---
+title: "KNN and Naive Bay"
+author: "Yuxuan Wang"
+date: "2023/4/22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(fastDummies)
+library(tidyverse)
+library(caret)
+library(MASS)
+# read data ------------------------
+math = read.csv("student-mat.csv", sep = ';', stringsAsFactors = T)
+str(math)
+por = read.csv("student-por.csv", sep = ";", stringsAsFactors = T)
+str(por)
+
+#set dummies
+math = fastDummies::dummy_columns(math, remove_first_dummy = T, remove_selected_columns = T)
+por = fastDummies::dummy_columns(por, remove_first_dummy = T, remove_selected_columns = T)
+
+
+predictors = setdiff(colnames(math), c("G1", "G2", "G3"))
+
+math$grade.cat = cut(math$G1, breaks=c(-1, 9, 11, 13, 15, 20),
+                     labels=c('F', 'D', 'C', 'B', 'A'))
+por$grade.cat = cut(por$G1, breaks=c(-1, 9, 11, 13, 15, 20),
+                    labels=c('F', 'D', 'C', 'B', 'A'))
+por$grade.con = por$G1
+math$grade.con = math$G1
+
+
+# split data -------------------------
+set.seed(114514)
+train_idx.math = sample(1:nrow(math), floor(nrow(math))*0.8, replace = F)
+train_idx.por = sample(1:nrow(por), floor(nrow(por))*0.8, replace = F)
+
+math.train = math[train_idx.math,]
+math.test = math[-train_idx.math,]
+
+por.train = por[train_idx.por,]
+por.test = por[-train_idx.por,]
+
+```
+```{r}
+par(mfrow=c(2,2))
+hist(as.numeric(math.train$grade.cat),breaks = c(0.5, 1.5, 2.5, 3.5, 4.5, 5.5),right=TRUE,freq=TRUE,main="Math Train")
+hist(as.numeric(math.test$grade.cat),breaks = c(0.5, 1.5, 2.5, 3.5, 4.5, 5.5),right=TRUE,freq=TRUE,main="Math Test")
+hist(as.numeric(por.train$grade.cat),breaks = c(0.5, 1.5, 2.5, 3.5, 4.5, 5.5),right=TRUE,freq=TRUE,main="Por Train")
+hist(as.numeric(por.test$grade.cat),breaks = c(0.5, 1.5, 2.5, 3.5, 4.5, 5.5),right=TRUE,freq=TRUE,main="Por Test")
+```
+```{r}
+math$grade.cat = cut(math$G1, breaks=c(-1, 9, 20),
+                     labels=c("Low","High"))
+por$grade.cat = cut(por$G1, breaks=c(-1, 9, 20),
+                     labels=c("Low","High"))
+set.seed(114514)
+train_idx.math = sample(1:nrow(math), floor(nrow(math))*0.8, replace = F)
+train_idx.por = sample(1:nrow(por), floor(nrow(por))*0.8, replace = F)
+
+math.train = math[train_idx.math,]
+math.test = math[-train_idx.math,]
+
+por.train = por[train_idx.por,]
+por.test = por[-train_idx.por,]
+preproc.param <- math.train %>%
+  preProcess(method = c("center", "scale"))
+math.train <- preproc.param %>% predict(math.train)
+math.test <- preproc.param %>% predict(math.test)
+preproc.param <- por.train %>%
+  preProcess(method = c("center", "scale"))
+por.train <- preproc.param %>% predict(por.train)
+por.test <- preproc.param %>% predict(por.test)
+
+library(e1071)
+classification.formula = as.formula(paste("grade.cat~", paste(predictors, collapse = "+"), sep = ''))
+regression.formula = as.formula(paste("grade.con~", paste(predictors, collapse = "+"), sep = ''))
+```
+
+## KNN
+```{r}
+library(plotrix)
+library(FNN)
+library(e1071)
+# For Math
+
+ctrl <- trainControl(method = "cv", number = 10)
+
+knn.model.math <- train(regression.formula, data = math.train, preProcess = c("center", "scale"), method = "knn", trControl = ctrl, tuneLength = 20)
+plot(knn.model.math)
+
+bestK.math <- knn.model.math$bestTune$k
+bestK.math
+Knn.for.math <- knn.reg(train = math.test[,-43], test = math.test[,-43], y = math$grade.con, k = bestK.math)
+
+#MSE
+mean((math.test$grade.con - Knn.for.math$pred)^2)
+```
+```{r}
+# For Portuguese
+
+knn.model.por <- train(regression.formula, data = por.train, preProcess = c("center", "scale"), method = "knn", trControl = ctrl, tuneLength = 20)
+plot(knn.model.por)
+bestK.por <- knn.model.por$bestTune$k
+bestK.por
+
+Knn.for.por <- knn.reg(train = por.test[,-43], test = por.test[,-43], y = por$grade.con, k = bestK.por)
+
+# MSE
+mean((por.test$grade.con - Knn.for.por$pred)^2)
+```
+## Naive Bayes Classifier
+```{r}
+# For Math
+
+tune_grid <- expand.grid(
+  laplace = seq(0.005, 0.05, by=0.005),
+  usekernel = FALSE,
+  adjust = c(TRUE,FALSE))
+
+nbc.model.math <- train(classification.formula,data = math.train,method = "naive_bayes",trControl = ctrl, tuneGrid = tune_grid)
+
+plot(nbc.model.math)
+```
+```{r}
+nbc.model.math$bestTune
+```
+```{r}
+# For Portuguese
+
+nbc.model.por <- train(classification.formula,data = por.train,method = "naive_bayes",trControl = ctrl, tuneGrid = tune_grid)
+
+plot(nbc.model.por)
+```
+```{r}
+nbc.model.por$bestTune
+```
+
+
+## Polynomial 
+```{r}
+# For Math
+
+paramGrid <- data.frame(degree = 1:5)
+
+#ctrl.poly <- trainControl(method = "repeatedcv", repeats = 3)
+#poly.model.math <- train(regression.formula, method = "lm", data = math.train, trControl = ctrl.poly, preProcess = c("center", "scale", "poly"), intercept = TRUE, tuneGrid = paramGrid)
+#poly.model.math <- train(regression.formula, method = "lm", data = math.train, trControl = ctrl.poly, preProcess = c("center", "scale", "poly"), intercept = TRUE)
+```
+
