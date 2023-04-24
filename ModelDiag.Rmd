@@ -34,6 +34,15 @@ math$grade.con = math$G1
 
 # split data -------------------------
 set.seed(114514)
+
+preproc.param <- math %>%
+  preProcess(method = c("center", "scale"))
+math <- preproc.param %>% predict(math)
+
+preproc.param <- por%>%
+  preProcess(method = c("center", "scale"))
+por<- preproc.param %>% predict(por)
+
 train_idx.math = sample(1:nrow(math), floor(nrow(math))*0.8, replace = F)
 train_idx.por = sample(1:nrow(por), floor(nrow(por))*0.8, replace = F)
 
@@ -56,42 +65,53 @@ classification.formula = as.formula(paste("grade.cat~", paste(predictors, collap
 regression.formula = as.formula(paste("grade.con~", paste(predictors, collapse = "+"), sep = ''))
 ```
 
-Check Error Assumption
+Check Multicollinearity
 ```{r}
-library(MASS)
-library(stats)
+library(faraway)
 math.ols<-lm(regression.formula,data=math)
 summary(math.ols)
-#R^2=0.2607
-rn<-rnorm(300,0,1)
-par(mfrow=c(1,2))
-qqnorm(rn,pch = 1, ylab="normally generated data points",frame = FALSE)
-qqnorm(math.ols$residuals,pch = 1,ylab="residual of OLS", frame = FALSE)
-bc<-boxcox(math.ols,plotit=T)
-lambda <- bc$x[which.max(bc$y)]
-lambda
-math.sq<-math
-math.sq$grade.con<-((math$grade.con+4)^0.46-1)/0.46
-math.ols.trans<-lm(grade.con~.-grade.cat-G1-G2-G3,data=math.sq)
-summary(math.ols.trans)
-#R^2=0.2668
+#conduct multicollinearity detection
+vif(math.ols)
+math.mult<-math[,-c(27,28)]
+math.ols.mult<-lm(grade.con~.-G1-G2-G3-grade.cat,data=math.mult)
+summary(math.ols.mult)
+#R^2=0.2595
 ```
-
 Identifying Outlier
 ```{r}
 library(faraway)
-cook.math<-cooks.distance(math.ols.trans)
+cook.math<-cooks.distance(math.ols.mult)
 halfnorm(cook.math,5,ylab="Cook's Distance")
-math.sq.sub<-math.sq[-c(1,249,193,158,387),]
-math.ols.trans.out<-lm(regression.formula,data=math.sq.sub)
-summary(math.ols.trans.out)
-#R^2=0.2906
+math.mult.out<-math.mult[-c(1,158,193,199,266),]
+math.ols.mult.out<-lm(grade.con~.-G1-G2-G3-grade.cat,data=math.mult.out)
+summary(math.ols.mult.out)
+#R^2=0.2858
+```
+
+Check Error Assumption
+```{r}
+library(MASS)
+rn<-rnorm(300,0,1)
+par(mfrow=c(1,2))
+qqnorm(rn,pch = 1, ylab="normally generated data points",frame = FALSE)
+qqnorm(math.ols.mult.out$residuals,pch = 1,ylab="residual of OLS", frame = FALSE)
+math.mult.out.error<-math.mult.out
+math.mult.out.error$grade.con<-math.mult.out.error$grade.con+4
+math.ols.mult.out.error<-lm(grade.con~.-G1-G2-G3-grade.cat,data=math.mult.out.error)
+bc<-boxcox(math.ols.mult.out.error,plotit=T)
+lambda <- bc$x[which.max(bc$y)]
+lambda
+math.mult.out.error.sq<-math.mult.out.error
+math.mult.out.error.sq$grade.con<-((math.mult.out.error.sq$grade.con)^0.30303-1)/0.30303
+math.ols.trans<-lm(grade.con~.-grade.cat-G1-G2-G3,data=math.mult.out.error.sq)
+summary(math.ols.trans)
+#R^2=0.2987
 ```
 
 Nonlinearity Detection
 ```{r}
 library(car)
-crPlots(math.ols.trans.out)
+crPlots(math.ols.trans)
 ```
 
 
