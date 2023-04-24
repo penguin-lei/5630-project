@@ -136,10 +136,10 @@ bc<-boxcox(por.ols.mult.out.error,plotit=T)
 lambda <- bc$x[which.max(bc$y)]
 lambda
 por.mult.out.error.sq<-por.mult.out.error
-por.mult.out.error.sq$grade.con<-((por.mult.out.error.sq$grade.con)^0.30303-1)/0.30303
+por.mult.out.error.sq$grade.con<-((por.mult.out.error.sq$grade.con)^0.5858586-1)/0.5858586
 por.ols.trans<-lm(grade.con~.-grade.cat-G1-G2-G3,data=por.mult.out.error.sq)
 summary(por.ols.trans)
-#R^2=0.3757
+#R^2=0.3699
 ```
 
 Nonlinearity Detection
@@ -153,4 +153,19 @@ crPlots(por.ols.trans)
 ```
 
 
-
+Variable Selection
+```{r}
+## math--------------
+library(leaps)
+math.reg<-regsubsets(grade.con~.-grade.cat-G1-G2-G3,data=math.mult.out.error.sq)
+summary(math.reg)
+#variables: failures+schoolsup_yes+Mjob_other+Fjob_teacher+famsup_yes+studytime+goout+freetime
+math.ols.select<-lm(grade.con~failures+schoolsup_yes+Mjob_other+Fjob_teacher+famsup_yes+studytime+goout+freetime,data=math.mult.out.error.sq)
+summary(math.ols.select)
+## por--------------
+por.reg<-regsubsets(grade.con~.-grade.cat-G1-G2-G3,data=por.mult.out.error.sq)
+summary(por.reg)
+#variables: failures+school_MS+higher_yes+studytime+Fjob_teacher+schoolsup_yes+absences+Dalc
+por.ols.select<-lm(grade.con~failures+school_MS+higher_yes+studytime+Fjob_teacher+schoolsup_yes+absences+Dalc,data=por.mult.out.error.sq)
+summary(por.ols.select)
+```
