@@ -30,7 +30,7 @@ nn.model.math.reg %>% evaluate(as.matrix(math.test[,predictors]), math.test$grad
 paras_list = expand.grid(c(5, 10, 20), c(2, 4, 5, 10), 
                          c("relu", "elu", "selu", "sigmoid"),
                          c("relu", "elu", "selu", "sigmoid"),
-                         c(4, 8, 16, 32),
+                         c(8, 16, 32),
                          c(10, 20, 40, 60, 80))
 # set up a validation set to select parameters
 val_d.idx = sample(nrow(math.train), 100, replace = F)
@@ -62,7 +62,10 @@ paras_list[which.min(val_error),]
 # Var1 Var2 Var3 Var4 Var5 Var6
 # 179   10   10 selu  elu    8   10
 
-idx = 179
+# Var1 Var2 Var3 Var4 Var5 Var6
+# 580    5    4 relu relu    8   20
+
+idx = 580
 nn.model.math.reg = keras_model_sequential()
 nn.model.math.reg %>% layer_dense(units = paras_list[idx,1], activation = paras_list[idx,3], input_shape = c(39)) %>%
   layer_dense(units = paras_list[idx,2], activation = paras_list[idx,4]) %>% 
