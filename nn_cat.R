@@ -18,15 +18,15 @@ nn.model.por.cat %>% layer_dense(units = nunits[1], activation = act_fun[1], inp
   layer_dense(units = 1, activation = "softmax")
 
 nn.model.por.cat %>% compile(optimizer = "rmsprop", 
-                             loss = "categorical_crossentropy",  
+                             loss = "hinge",  
                              metric=c("accuracy"))
 
 nn.model.por.cat.fit <- nn.model.por.cat %>% fit(as.matrix(por.train[,predictors]), 
-                                                 por.train$grade.cat, 
+                                                 por.train$grade.cat != "F", 
                                                  epochs = 20, 
                                                  batch_size = 8,
                                                  validation_split = 0.2)
-mean((nn.model.por.cat %>% predict(as.matrix(por.test[,predictors])) - por.test$grade.cat)^2)
+mean((nn.model.por.cat %>% predict(as.matrix(por.test[,predictors])) != (por.test$grade.cat!="F")))
 
 nn.model.por.cat %>% evaluate(as.matrix(por.test[,predictors]), por.test$grade.cat)
 
@@ -35,7 +35,7 @@ paras_list = expand.grid(c(5, 10, 20), c(2, 4, 5, 10),
                          c("relu", "elu", "selu", "sigmoid"),
                          c("relu", "elu", "selu", "sigmoid"),
                          c(8, 16, 32),
-                         c(10, 20, 40, 60, 80))
+                         c(5,10, 20, 40))
 # set up a validation set to select parameters
 set.seed(1)
 val_d.idx = sample(nrow(por.train), 100, replace = F)
@@ -63,27 +63,27 @@ val_error = foreach(i = 1:nrow(paras_list)) %dopar% {
                                                    epochs = paras_list[i,6], 
                                                    batch_size = paras_list[i,5],)
   
-  return(mean((nn.model.por.cat %>% predict(as.matrix(val_d[,predictors])) - val_d$grade.cat)^2))
+  return()
   
 }
 
 set.seed(1)
 for(i in 1:nrow(paras_list)){
-  nn.model.math.cat = keras_model_sequential()
-  nn.model.math.cat %>% layer_dense(units = paras_list[i,1], activation = paras_list[i,3], input_shape = c(39)) %>%
+  nn.model.por.cat = keras_model_sequential()
+  nn.model.por.cat %>% layer_dense(units = paras_list[i,1], activation = paras_list[i,3], input_shape = c(39)) %>%
     layer_dense(units = paras_list[i,2], activation = paras_list[i,4]) %>% 
     layer_dense(units = 1, activation = "softmax")
   
   nn.model.por.cat %>% compile(optimizer = "rmsprop", 
-                               loss = "categorical_crossentropy",  
+                               loss = "binary_crossentropy",  
                                metric=c("accuracy"))
   
-  nn.model.math.cat.fit <- nn.model.math.cat %>% fit(as.matrix(train_d[,predictors]), 
-                                                     train_d$grade.cat, 
+  nn.model.por.cat.fit <- nn.model.por.cat %>% fit(as.matrix(train_d[,predictors]), 
+                                                     train_d$grade.cat != "F", 
                                                      epochs = paras_list[i,6], 
                                                      batch_size = paras_list[i,5],)
   
-  val_error[i] = mean((nn.model.math.cat %>% predict(as.matrix(val_d[,predictors])) - val_d$grade.cat)^2)
+  val_error[i] = mean((nn.model.por.cat %>% predict(as.matrix(val_d[,predictors])) != (val_d$grade.cat!="F")))
 }
 
 
