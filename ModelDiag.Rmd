@@ -68,29 +68,47 @@ regression.formula = as.formula(paste("grade.con~", paste(predictors, collapse =
 Check Multicollinearity
 ```{r}
 library(faraway)
+## math-------------------
 math.ols<-lm(regression.formula,data=math)
-summary(math.ols)
 #conduct multicollinearity detection
 vif(math.ols)
 math.mult<-math[,-c(27,28)]
 math.ols.mult<-lm(grade.con~.-G1-G2-G3-grade.cat,data=math.mult)
 summary(math.ols.mult)
 #R^2=0.2595
+## por-----------------
+por.ols<-lm(regression.formula,data=por)
+#conduct multicollinearity detection
+vif(por.ols)
+por.mult<-por[,-c(27,28)]
+por.ols.mult<-lm(grade.con~.-G1-G2-G3-grade.cat,data=por.mult)
+summary(por.ols.mult)
+#R^2=0.3247 
 ```
+
 Identifying Outlier
 ```{r}
 library(faraway)
+## math-------------------
 cook.math<-cooks.distance(math.ols.mult)
 halfnorm(cook.math,5,ylab="Cook's Distance")
 math.mult.out<-math.mult[-c(1,158,193,199,266),]
 math.ols.mult.out<-lm(grade.con~.-G1-G2-G3-grade.cat,data=math.mult.out)
 summary(math.ols.mult.out)
 #R^2=0.2858
+## por-------------------
+cook.por<-cooks.distance(por.ols.mult)
+halfnorm(cook.por,5,ylab="Cook's Distance")
+por.mult.out<-por.mult[-c(1,604,500,524,550),]
+por.ols.mult.out<-lm(grade.con~.-G1-G2-G3-grade.cat,data=por.mult.out)
+summary(por.ols.mult.out)
+#R^2=0.359
 ```
 
 Check Error Assumption
 ```{r}
 library(MASS)
+## math-------------
 rn<-rnorm(300,0,1)
 par(mfrow=c(1,2))
 qqnorm(rn,pch = 1, ylab="normally generated data points",frame = FALSE)
@@ -106,12 +124,32 @@ math.mult.out.error.sq$grade.con<-((math.mult.out.error.sq$grade.con)^0.30303-1)
 math.ols.trans<-lm(grade.con~.-grade.cat-G1-G2-G3,data=math.mult.out.error.sq)
 summary(math.ols.trans)
 #R^2=0.2987
+## por-------------
+rn<-rnorm(300,0,1)
+par(mfrow=c(1,2))
+qqnorm(rn,pch = 1, ylab="normally generated data points",frame = FALSE)
+qqnorm(por.ols.mult.out$residuals,pch = 1,ylab="residual of OLS", frame = FALSE)
+por.mult.out.error<-por.mult.out
+por.mult.out.error$grade.con<-por.mult.out.error$grade.con+4
+por.ols.mult.out.error<-lm(grade.con~.-G1-G2-G3-grade.cat,data=por.mult.out.error)
+bc<-boxcox(por.ols.mult.out.error,plotit=T)
+lambda <- bc$x[which.max(bc$y)]
+lambda
+por.mult.out.error.sq<-por.mult.out.error
+por.mult.out.error.sq$grade.con<-((por.mult.out.error.sq$grade.con)^0.30303-1)/0.30303
+por.ols.trans<-lm(grade.con~.-grade.cat-G1-G2-G3,data=por.mult.out.error.sq)
+summary(por.ols.trans)
+#R^2=0.3757
 ```
 
 Nonlinearity Detection
 ```{r}
+## math--------
 library(car)
 crPlots(math.ols.trans)
+## por--------
+library(car)
+crPlots(por.ols.trans)
 ```
 
 
