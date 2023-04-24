@@ -56,10 +56,8 @@ hist(as.numeric(por.train$grade.cat),breaks = c(0.5, 1.5, 2.5, 3.5, 4.5, 5.5),ri
 hist(as.numeric(por.test$grade.cat),breaks = c(0.5, 1.5, 2.5, 3.5, 4.5, 5.5),right=TRUE,freq=TRUE,main="Por Test")
 ```
 ```{r}
-math$grade.cat = cut(math$G1, breaks=c(-1, 9, 20),
-                     labels=c("Low","High"))
-por$grade.cat = cut(por$G1, breaks=c(-1, 9, 20),
-                     labels=c("Low","High"))
+#math$grade.cat = cut(math$G1, breaks=c(-1, 9, 20),labels=c("Low","High"))
+#por$grade.cat = cut(por$G1, breaks=c(-1, 9, 20),labels=c("Low","High"))
 set.seed(114514)
 train_idx.math = sample(1:nrow(math), floor(nrow(math))*0.8, replace = F)
 train_idx.por = sample(1:nrow(por), floor(nrow(por))*0.8, replace = F)
@@ -83,12 +81,12 @@ classification.formula = as.formula(paste("grade.cat~", paste(predictors, collap
 regression.formula = as.formula(paste("grade.con~", paste(predictors, collapse = "+"), sep = ''))
 ```
 
-## KNN
+## KNN Regression
 ```{r}
 library(plotrix)
 library(FNN)
 library(e1071)
-# For Math
+## Math-----------------
 
 ctrl <- trainControl(method = "cv", number = 10)
 
@@ -97,12 +95,12 @@ plot(knn.model.math)
 
 bestK.math <- knn.model.math$bestTune$k
 bestK.math
-Knn.for.math <- knn.reg(train = math.test[,-43], test = math.test[,-43], y = math$grade.con, k = bestK.math)
+Knn.for.math <- knn.reg(train = math.train[,-c(14,15,16,43)], test = math.test[,-c(14,15,16,43)], y = math.train$grade.con, k = bestK.math)
 
 #MSE
 mean((math.test$grade.con - Knn.for.math$pred)^2)
-```
-```{r}
+
+## Por---------------
 # For Portuguese
 
 knn.model.por <- train(regression.formula, data = por.train, preProcess = c("center", "scale"), method = "knn", trControl = ctrl, tuneLength = 20)
@@ -110,13 +108,46 @@ plot(knn.model.por)
 bestK.por <- knn.model.por$bestTune$k
 bestK.por
 
-Knn.for.por <- knn.reg(train = por.test[,-43], test = por.test[,-43], y = por$grade.con, k = bestK.por)
+Knn.for.por <- knn.reg(train = por.train[,-c(14,15,16,43)], test = por.test[,-c(14,15,16,43)], y = por.train$grade.con, k = bestK.por)
 
 # MSE
 mean((por.test$grade.con - Knn.for.por$pred)^2)
 ```
-## Naive Bayes Classifier
+
+## KNN Classification
 ```{r}
+## math----------
+library(class)
+set.seed(114514)
+ctrl <- trainControl(method = "cv", number = 10)
+
+knn.model.math <- train(classification.formula, data = math.train, preProcess = c("center", "scale"), method = "knn", trControl = ctrl, tuneLength = 20)
+plot(knn.model.math)
+bestK.math <- knn.model.math$bestTune$k
+bestK.math
+math.train$grade.cat<-as.numeric(math.train$grade.cat)
+math.test$grade.cat<-as.numeric(math.test$grade.cat)
+Knn.for.math <- knn(train = math.train[,-c(14,15,16,44)], test = math.test[,-c(14,15,16,44)], cl = math.train$grade.cat, k = bestK.math)
+#Misclassification Error
+1-mean(math.test$grade.cat==Knn.for.math)
+## por----------
+set.seed(114514)
+ctrl <- trainControl(method = "cv", number = 10)
+
+knn.model.por <- train(classification.formula, data = por.train, preProcess = c("center", "scale"), method = "knn", trControl = ctrl, tuneLength = 20)
+plot(knn.model.por)
+bestK.por <- knn.model.por$bestTune$k
+bestK.por
+por.train$grade.cat<-as.numeric(por.train$grade.cat)
+por.test$grade.cat<-as.numeric(por.test$grade.cat)
+Knn.for.por <- knn(train = por.train[,-c(14,15,16,44)], test = por.test[,-c(14,15,16,44)], cl = por.train$grade.cat, k = bestK.por)
+#Misclassification Error
+1-mean(por.test$grade.cat==Knn.for.por)
+```
+
+## Naive Bayes Classifier
+
+library(naivebayes)
 # For Math
 
 tune_grid <- expand.grid(
@@ -127,30 +158,16 @@ tune_grid <- expand.grid(
 nbc.model.math <- train(classification.formula,data = math.train,method = "naive_bayes",trControl = ctrl, tuneGrid = tune_grid)
 
 plot(nbc.model.math)
-```
-```{r}
+
+
+
 nbc.model.math$bestTune
-```
-```{r}
+
 # For Portuguese
 
 nbc.model.por <- train(classification.formula,data = por.train,method = "naive_bayes",trControl = ctrl, tuneGrid = tune_grid)
 
 plot(nbc.model.por)
-```
-```{r}
 nbc.model.por$bestTune
-```
 
-
-## Polynomial 
-```{r}
-# For Math
-
-paramGrid <- data.frame(degree = 1:5)
-
-#ctrl.poly <- trainControl(method = "repeatedcv", repeats = 3)
-#poly.model.math <- train(regression.formula, method = "lm", data = math.train, trControl = ctrl.poly, preProcess = c("center", "scale", "poly"), intercept = TRUE, tuneGrid = paramGrid)
-#poly.model.math <- train(regression.formula, method = "lm", data = math.train, trControl = ctrl.poly, preProcess = c("center", "scale", "poly"), intercept = TRUE)
-```
 
