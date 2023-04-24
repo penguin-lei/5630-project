@@ -59,10 +59,6 @@ hist(as.numeric(por.test$grade.cat),breaks = c(0.5, 1.5, 2.5, 3.5, 4.5, 5.5),rig
 ```
 
 ```{r}
-math$grade.cat = cut(math$G1, breaks=c(-1, 9, 20),
-                     labels=c("Low","High"))
-por$grade.cat = cut(por$G1, breaks=c(-1, 9, 20),
-                     labels=c("Low","High"))
 set.seed(114514)
 train_idx.math = sample(1:nrow(math), floor(nrow(math))*0.8, replace = F)
 train_idx.por = sample(1:nrow(por), floor(nrow(por))*0.8, replace = F)
@@ -208,7 +204,6 @@ library(gbm)
 ### Unpruned Tree----------
 tree.math<- rpart(classification.formula, data=math.train,control=rpart.control(cp=0))
 #plot the tree
-fancyRpartPlot(tree.math, caption = NULL)
 #predicted result for tree
 tree.pred.math<-predict(tree.math,newdata=,math.test,type="class")
 tree.pred.math
@@ -220,7 +215,7 @@ tree.tune.math <- train(classification.formula,
                     data = math.train, 
                   method = "rpart", 
                   preProcess = c("center", "scale"),
-                  tuneGrid = data.frame(cp = seq(0, 0.2, by=0.004)),
+                  tuneGrid = data.frame(cp = seq(0, 0.05, by=0.001)),
                   trControl = trainControl(
                     method = "repeatedcv",
                     repeats = 5, number = 10
@@ -231,9 +226,9 @@ plot(tree.tune.math)
 best<-tree.tune.math$bestTune
 best
 tree.math.pruned<- rpart(classification.formula, data=math.train,control=rpart.control(cp=best))
-#We are unable to plot the tree as it's just a root
+## We can't plot this because it's only a root--------
 #predicted result for pruned tree
-tree.pruned.math.pred<-predict(tree.math.pruned,newdata=,math.test,type="class")
+tree.pruned.math.pred<-predict(tree.math.pruned,newdata=math.test,type="class")
 tree.pruned.math.pred
 #misclassification for pruned
 1-mean(tree.pruned.math.pred==math.test$grade.cat)
@@ -242,7 +237,6 @@ tree.por<- rpart(classification.formula, data=por.train,control=rpart.control(cp
 
 ## Decision Tree for Por---------
 #plot the tree
-fancyRpartPlot(tree.por, caption = NULL)
 #predicted result for tree
 tree.pred.por<-predict(tree.por,newdata=,por.test,type="class")
 tree.pred.por
@@ -267,7 +261,7 @@ best
 tree.por.pruned<- rpart(classification.formula, data=por.train,control=rpart.control(cp=best))
 fancyRpartPlot(tree.por.pruned, caption = NULL)
 #predicted result for pruned tree
-tree.pruned.por.pred<-predict(tree.por.pruned,newdata=,por.test,type="class")
+tree.pruned.por.pred<-predict(tree.por.pruned,newdata=por.test,type="class")
 tree.pruned.por.pred
 #misclassification rate for pruned
 1-mean(tree.pruned.por.pred==por.test$grade.cat)
