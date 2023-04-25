@@ -111,3 +111,4 @@ nn.model.por.reg.fit <- nn.model.por.reg %>% fit(as.matrix(por.train[,predictors
                                                    validation_split = 0.2)
 
 mean((nn.model.por.reg %>% predict(as.matrix(por.test[,predictors])) - por.test$grade.con)^2)
+mean((nn.model.por.reg %>% predict(as.matrix(por.train[,predictors])) - por.train$grade.con)^2)

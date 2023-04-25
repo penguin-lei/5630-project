@@ -1,0 +1,340 @@
+---
+title: "C. code"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+```{r}
+## Non-linear SVM ------------------------------- 
+library(e1071)
+
+### math regression -----------------
+svm.math.reg = svm.cv.mine(math.train, regression.formula, 10, "grade.con")
+svm.math.reg
+# $kernel
+# [1] "radial"
+# 
+# $gamma
+# [1] 0.01
+# 
+# $cost
+# [1] 0.5
+
+svm.math.reg.fit = do.call(svm, c(list(formula = regression.formula, data = math.train), svm.math.reg))
+predict.test = predict(svm.math.reg.fit, math.test, decision.values = F)
+
+svm.math.reg.error.test = mean((predict.test - math.test$grade.con)^2)
+svm.math.reg.error.train = mean((predict(svm.math.reg.fit) - math.train$grade.con)^2)
+svm.math.reg.error.test
+
+svm.math.reg.var.imp = numeric(length(predictors))
+for(i in 1:length(predictors))
+{
+  svm.math.reg.fit.inf = do.call(svm, c(list(formula = as.formula(paste("grade.con~", paste(predictors[-i], collapse = "+"), sep = '')), data = math.train), svm.math.reg))
+
+  svm.math.reg.var.imp[i] = mean((predict(svm.math.reg.fit.inf) - math.train$grade.con)^2) - svm.math.reg.error.train
+}
+
+svm.math.reg.var.imp = data.frame(predictors = predictors,
+                                  importance = svm.math.reg.var.imp)
+svm.math.reg.var.imp = svm.math.reg.var.imp[order(svm.math.reg.var.imp$importance, decreasing = T),]
+xtable(svm.math.reg.var.imp)
+
+
+### por regression -------------------------
+svm.por.reg = svm.cv.mine(por.train, regression.formula, 10, "grade.con")
+svm.por.reg
+# $kernel
+# [1] "radial"
+# 
+# $gamma
+# [1] 0.005959184
+# 
+# $cost
+# [1] 0.8
+
+svm.por.reg.fit = do.call(svm, c(list(formula = regression.formula, data = por.train), svm.por.reg))
+predict.test = predict(svm.por.reg.fit, por.test, decision.values = F)
+
+svm.por.reg.error.test = mean((predict.test - por.test$grade.con)^2)
+svm.por.reg.error.test
+svm.por.reg.error.train = mean((predict(svm.por.reg.fit) - por.train$grade.con)^2)
+
+svm.por.reg.var.imp = numeric(length(predictors))
+for(i in 1:length(predictors))
+{
+  svm.por.reg.fit.inf = do.call(svm, c(list(formula = as.formula(paste("grade.con~", paste(predictors[-i], collapse = "+"), sep = '')), data = por.train), svm.por.reg))
+  
+  svm.por.reg.var.imp[i] = mean((predict(svm.por.reg.fit.inf) - por.train$grade.con)^2) - svm.por.reg.error.train
+}
+
+svm.por.reg.var.imp = data.frame(predictors = predictors,
+                                 importance = svm.por.reg.var.imp)
+svm.por.reg.var.imp = svm.por.reg.var.imp[order(svm.por.reg.var.imp$importance, decreasing = T),]
+xtable(svm.por.reg.var.imp[1:10,])
+
+### por class ------------------------------
+svm.por.cat = svm.cv.mine.cat(por.train, classification.formula, 10, "grade.cat")
+svm.por.cat
+# $kernel
+# [1] "radial"
+# 
+# $gamma
+# [1] 0.002120408
+# 
+# $cost
+# [1] 3.4
+
+svm.por.cat.fit = do.call(svm, c(list(formula = classification.formula, data = por.train), svm.por.cat))
+predict.test = predict(svm.por.cat.fit, por.test, decision.values = F)
+
+svm.por.cat.error.test = mean((predict.test != por.test$grade.cat))
+svm.por.cat.error.train = mean(predict(svm.por.cat.fit)!=por.train$grade.cat)
+svm.por.cat.error.test
+
+### math class ----------------
+svm.math.cat = svm.cv.mine.cat(math.train, classification.formula, 10, "grade.cat")
+svm.math.cat
+# $kernel
+# [1] "radial"
+# 
+# $gamma
+# [1] 0.00252449
+# 
+# $cost
+# [1] 5
+
+svm.math.cat.fit = do.call(svm, c(list(formula = classification.formula, data = math.train), svm.math.cat))
+predict.test = predict(svm.math.cat.fit, math.test, decision.values = F)
+
+svm.math.cat.error.test = mean((predict.test != math.test$grade.cat))
+svm.math.cat.error.train = mean(predict(svm.math.cat.fit)!=math.train$grade.cat)
+svm.math.cat.error.test
+
+svm.math.cat.var.imp = numeric(length(predictors))
+for(i in 1:length(predictors))
+{
+  svm.math.cat.fit.inf = do.call(svm, c(list(formula = as.formula(paste("grade.cat~", paste(predictors[-i], collapse = "+"), sep = '')), data = math.train), svm.math.cat))
+  
+  svm.math.cat.var.imp[i] = mean((predict(svm.math.cat.fit.inf) != math.train$grade.cat)) - svm.math.cat.error.train
+}
+
+svm.math.cat.var.imp = data.frame(predictors = predictors,
+                                  importance = svm.math.cat.var.imp)
+svm.math.cat.var.imp = svm.math.cat.var.imp[order(svm.math.cat.var.imp$importance, decreasing = T),]
+xtable(svm.math.cat.var.imp[1:10,])
+
+svm.por.cat.var.imp = numeric(length(predictors))
+for(i in 1:length(predictors))
+{
+  svm.por.cat.fit.inf = do.call(svm, c(list(formula = as.formula(paste("grade.cat~", paste(predictors[-i], collapse = "+"), sep = '')), data = por.train), svm.por.cat))
+  
+  svm.por.cat.var.imp[i] = mean((predict(svm.por.cat.fit.inf) != por.train$grade.cat)) - svm.por.cat.error.train
+}
+
+svm.por.cat.var.imp = data.frame(predictors = predictors,
+                                 importance = svm.por.cat.var.imp)
+svm.por.cat.var.imp = svm.por.cat.var.imp[order(svm.por.cat.var.imp$importance, decreasing = T),]
+xtable(svm.por.cat.var.imp[1:10,])
+
+intersect(svm.por.cat.var.imp[1:10,1], svm.math.cat.var.imp[1:10,1])
+
+
+## KNN ----------------------------
+
+## Neural network -------------------
+library(keras)
+library(dplyr)
+
+nn.model.math.reg = keras_model_sequential()
+
+
+nunits = c(10, 5)
+act_fun = c("relu", "elu")
+
+nn.model.math.reg %>% layer_dense(units = nunits[1], activation = act_fun[1], input_shape = c(39)) %>%
+  layer_dense(units = 1)
+
+nn.model.math.reg %>% compile(loss = "mse",
+                  optimizer = 'rmsprop',
+                  metrics = 'mse')
+
+nn.model.math.reg.fit <- nn.model.math.reg %>% fit(as.matrix(math.train[,predictors]), 
+                                                   math.train$grade.con, 
+                                                   epochs = 20, 
+                                                   batch_size = 8,
+                                                   validation_split = 0.2)
+mean((nn.model.math.reg %>% predict(as.matrix(math.test[,predictors])) - math.test$grade.con)^2)
+
+nn.model.math.reg %>% evaluate(as.matrix(math.test[,predictors]), math.test$grade.con)
+
+
+paras_list = expand.grid(c(5, 10, 20), c(2, 4, 5, 10), 
+                         c("relu", "elu", "selu", "sigmoid"),
+                         c("relu", "elu", "selu", "sigmoid"),
+                         c(8, 16, 32),
+                         c(10, 20, 40, 60, 80))
+# set up a validation set to select parameters
+val_d.idx = sample(nrow(math.train), 100, replace = F)
+val_d = math.train[val_d.idx,]
+train_d = math.train[-val_d.idx,]
+
+val_error = numeric(nrow(paras_list))
+
+for(i in 1:nrow(paras_list)){
+  nn.model.math.reg = keras_model_sequential()
+  nn.model.math.reg %>% layer_dense(units = paras_list[i,1], activation = paras_list[i,3], input_shape = c(39)) %>%
+    layer_dense(units = paras_list[i,2], activation = paras_list[i,4]) %>% 
+    layer_dense(units = 1)
+  
+  nn.model.math.reg %>% compile(loss = "mse",
+                                optimizer = 'rmsprop',
+                                metrics = 'mse')
+  
+  nn.model.math.reg.fit <- nn.model.math.reg %>% fit(as.matrix(train_d[,predictors]), 
+                                                     train_d$grade.con, 
+                                                     epochs = paras_list[i,6], 
+                                                     batch_size = paras_list[i,5],)
+  
+  val_error[i] = mean((nn.model.math.reg %>% predict(as.matrix(val_d[,predictors])) - val_d$grade.con)^2)
+}
+
+
+paras_list[which.min(val_error),]
+# Var1 Var2 Var3 Var4 Var5 Var6
+# 580    5    4 relu relu    8   20
+
+idx = 179
+nn.model.math.reg = keras_model_sequential()
+nn.model.math.reg %>% layer_dense(units = paras_list[idx,1], activation = paras_list[idx,3], input_shape = c(39)) %>%
+  layer_dense(units = paras_list[idx,2], activation = paras_list[idx,4]) %>% 
+  layer_dense(units = 1)
+
+nn.model.math.reg %>% compile(loss = "mse",
+                              optimizer = 'rmsprop',
+                              metrics = 'mse')
+
+nn.model.math.reg.fit <- nn.model.math.reg %>% fit(as.matrix(math.train[,predictors]), 
+                                                   math.train$grade.con, 
+                                                   epochs = paras_list[idx,6], 
+                                                   batch_size = paras_list[idx,5],
+                                                   validation_split = 0.2)
+
+mean((nn.model.math.reg %>% predict(as.matrix(math.test[,predictors])) - math.test$grade.con)^2)
+
+nn.model.math.reg = keras_model_sequential()
+nn.model.math.reg %>% layer_dense(units = 5, activation = "relu", input_shape = c(39)) %>%
+  layer_dense(units = 4, activation = "relu") %>% 
+  layer_dense(units = 1)
+
+nn.model.math.reg %>% compile(loss = "mse",
+                              optimizer = 'rmsprop',
+                              metrics = 'mse')
+
+nn.model.math.reg.fit <- nn.model.math.reg %>% fit(as.matrix(math.train[,predictors]), 
+                                                   math.train$grade.con, 
+                                                   epochs = 20, 
+                                                   batch_size = 8,
+                                                   validation_split = 0.2)
+
+mean((nn.model.math.reg %>% predict(as.matrix(math.test[,predictors])) - math.test$grade.con)^2)
+mean((nn.model.math.reg %>% predict(as.matrix(math.train[,predictors])) - math.train$grade.con)^2)
+
+library(keras)
+library(dplyr)
+
+
+
+
+nn.model.por.reg = keras_model_sequential()
+
+
+nunits = c(10, 5)
+act_fun = c("relu", "elu")
+
+nn.model.por.reg %>% layer_dense(units = nunits[1], activation = act_fun[1], input_shape = c(39)) %>%
+  layer_dense(units = 1)
+
+nn.model.por.reg %>% compile(loss = "mse",
+                              optimizer = 'rmsprop',
+                              metrics = 'mse')
+
+nn.model.por.reg.fit <- nn.model.por.reg %>% fit(as.matrix(por.train[,predictors]), 
+                                                   por.train$grade.con, 
+                                                   epochs = 20, 
+                                                   batch_size = 8,
+                                                   validation_split = 0.2)
+mean((nn.model.por.reg %>% predict(as.matrix(por.test[,predictors])) - por.test$grade.con)^2)
+
+nn.model.por.reg %>% evaluate(as.matrix(por.test[,predictors]), por.test$grade.con)
+
+
+paras_list = expand.grid(c(5, 10, 20), c(2, 4, 5, 10), 
+                         c("relu", "elu", "selu", "sigmoid"),
+                         c("relu", "elu", "selu", "sigmoid"),
+                         c(8, 16, 32),
+                         c(10, 20, 40, 60, 80))
+# set up a validation set to select parameters
+set.seed(1)
+val_d.idx = sample(nrow(por.train), 100, replace = F)
+val_d = por.train[val_d.idx,]
+train_d = por.train[-val_d.idx,]
+
+val_error = numeric(nrow(paras_list))
+
+
+options(keras.view_metrics = FALSE)
+
+set.seed(1)
+for(i in 1:nrow(paras_list)){
+  nn.model.math.reg = keras_model_sequential()
+  nn.model.math.reg %>% layer_dense(units = paras_list[i,1], activation = paras_list[i,3], input_shape = c(39)) %>%
+    layer_dense(units = paras_list[i,2], activation = paras_list[i,4]) %>% 
+    layer_dense(units = 1)
+  
+  nn.model.math.reg %>% compile(loss = "mse",
+                                optimizer = 'rmsprop',
+                                metrics = 'mse')
+  
+  nn.model.math.reg.fit <- nn.model.math.reg %>% fit(as.matrix(train_d[,predictors]), 
+                                                     train_d$grade.con, 
+                                                     epochs = paras_list[i,6], 
+                                                     batch_size = paras_list[i,5],)
+  
+  val_error[i] = mean((nn.model.math.reg %>% predict(as.matrix(val_d[,predictors])) - val_d$grade.con)^2)
+}
+
+
+paras_list[which.min(val_error),]
+
+
+paras_list[which.min(val_error),]
+# Var1 Var2 Var3    Var4 Var5 Var6
+# 2100   20   10 selu sigmoid   16   60
+
+idx = 2100
+nn.model.por.reg = keras_model_sequential()
+nn.model.por.reg %>% layer_dense(units = paras_list[idx,1], activation = paras_list[idx,3], input_shape = c(39)) %>%
+  layer_dense(units = paras_list[idx,2], activation = paras_list[idx,4]) %>% 
+  layer_dense(units = 1)
+
+nn.model.por.reg %>% compile(loss = "mse",
+                              optimizer = 'rmsprop',
+                              metrics = 'mse')
+
+nn.model.por.reg.fit <- nn.model.por.reg %>% fit(as.matrix(por.train[,predictors]), 
+                                                   por.train$grade.con, 
+                                                   epochs = paras_list[idx,6], 
+                                                   batch_size = paras_list[idx,5],
+                                                   validation_split = 0.2)
+
+mean((nn.model.por.reg %>% predict(as.matrix(por.test[,predictors])) - por.test$grade.con)^2)
+mean((nn.model.por.reg %>% predict(as.matrix(por.train[,predictors])) - por.train$grade.con)^2)
+
+## Tree based ---------------------------
+```
+
+

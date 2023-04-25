@@ -15,14 +15,14 @@ nunits = c(10, 5)
 act_fun = c("relu", "elu")
 
 nn.model.por.cat %>% layer_dense(units = nunits[1], activation = act_fun[1], input_shape = c(39)) %>%
-  layer_dense(units = 1, activation = "softmax")
+  layer_dense(units = 5, activation = "softmax")
 
 nn.model.por.cat %>% compile(optimizer = "rmsprop", 
-                             loss = "hinge",  
+                             loss = "categorical_crossentropy",  
                              metric=c("accuracy"))
 
 nn.model.por.cat.fit <- nn.model.por.cat %>% fit(as.matrix(por.train[,predictors]), 
-                                                 por.train$grade.cat != "F", 
+                                                 as.numeric(por.train$grade.cat), 
                                                  epochs = 20, 
                                                  batch_size = 8,
                                                  validation_split = 0.2)
