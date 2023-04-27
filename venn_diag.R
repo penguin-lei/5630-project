@@ -10,7 +10,7 @@ par(mar = c(2, 8, 2, 8))
 venn.diagram(
   x = list(svm.math.cat.var.imp[1:10,1], svm.math.reg.var.imp[1:10,1], svm.por.cat.var.imp[1:10,1], svm.por.reg.var.imp[1:10,1]),
   category.names = c("math class" , "math reg" , "por class", "por reg"),
-  filename = '#14_venn_diagramm.png',
+  filename = 'venn2.png',
   output=T,
   
   # Output features
